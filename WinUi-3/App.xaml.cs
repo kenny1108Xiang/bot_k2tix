@@ -18,6 +18,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Text.Json;
+using System.Text.Encodings.Web;
 using Windows.ApplicationModel;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Activation;
@@ -183,7 +184,8 @@ namespace kktix
 
         private static readonly JsonSerializerOptions _jsonOptions = new()
         {
-            WriteIndented = true
+            WriteIndented = true,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
 
         /// <summary>

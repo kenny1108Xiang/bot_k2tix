@@ -18,6 +18,7 @@ using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Text.Json;
+using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
@@ -303,7 +304,8 @@ namespace kktix
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
-            WriteIndented = true
+            WriteIndented = true,
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
 
         private StringBuilder ValidateInputs()
