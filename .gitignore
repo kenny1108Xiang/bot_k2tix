@@ -21,3 +21,9 @@ BundleArtifacts/
 *.opendb
 *.dbmdl
 *.cache
+
+
+# Python
+user/
+venv/
+e.g.txt
