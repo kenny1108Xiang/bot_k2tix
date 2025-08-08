@@ -1,0 +1,23 @@
+﻿# Build artifacts
+bin/
+obj/
+
+# IDE
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Logs
+*.log
+
+# App packaging outputs
+AppPackages/
+BundleArtifacts/
+
+# Others
+*.opendb
+*.dbmdl
+*.cache

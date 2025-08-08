@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "kktix (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "kktix (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

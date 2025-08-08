@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="kktix.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:kktix"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+    Title="kktix">
+
+    <!-- Mica 背景 -->
+    <Window.SystemBackdrop>
+        <MicaBackdrop />
+    </Window.SystemBackdrop>
+
+    <!-- 最外層 Grid：分兩列，Row0 為 CustomTitleBar，Row1 為內容 -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- 標題列 -->
+            <RowDefinition Height="*"/>
+            <!-- 主內容 -->
+        </Grid.RowDefinitions>
+
+        <!-- 自訂標題列 (行0) -->
+        <Grid x:Name="CustomTitleBar"
+              Grid.Row="0"
+              Height="48"
+              Background="Transparent">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            
+            <!--出現 WMC1506 問題解決-->
+            <TextBlock Text="{x:Bind Title, Mode=OneTime}"
+                       VerticalAlignment="Center"
+                       Margin="12,0,0,0"
+                       FontSize="20"
+                       Foreground="White"/>
+            <StackPanel Grid.Column="1"
+                        Width="150"
+                        Height="48"
+                        Background="Transparent"/>
+        </Grid>
+
+        <!-- 主內容 (行1) -->
+        <ScrollViewer Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto">
+            <Grid x:Name="RootGrid"
+                  Loaded="RootGrid_Loaded"
+                  Padding="24"
+                  RowSpacing="12"
+                  ColumnSpacing="16"
+                  MaxWidth="720"
+                  HorizontalAlignment="Center">
+
+                <Grid.Resources>
+                    <x:Double x:Key="TextBoxWidth">300</x:Double>
+                </Grid.Resources>
+
+                <!-- 只包含表單項目的 Grid -->
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <!-- 次標題 -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- 帳號 -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- 密碼 -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- 票名(第一行) -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- 票名(第二行) -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- 票價 -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- 票數 -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- 搶票 URL -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- 劃位 -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- 自動付款 -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- 開賣時間 -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- 按鈕列 -->
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <!-- 調整 Column 為 Auto + Star 以便動態伸縮 -->
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- 次標題 -->
+                <TextBlock Grid.Row="0" Grid.ColumnSpan="2"
+                           Text="設定資料"
+                           FontSize="28"
+                           FontWeight="SemiBold"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,24"/>
+
+                <!-- 帳號 -->
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="帳號" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4">
+                    <TextBox x:Name="NameTextBox" Width="{StaticResource TextBoxWidth}"
+                             HorizontalAlignment="Left"
+                             HorizontalContentAlignment="Center"
+                             TextAlignment="Center"
+                             TextChanged="OnFormChanged"/>
+                    <TextBlock x:Name="NameErrorText" Foreground="Tomato" FontSize="12" Visibility="Collapsed"/>
+                </StackPanel>
+
+                <!-- 密碼 -->
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="密碼" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                <StackPanel Grid.Row="2" Grid.Column="1" Spacing="4">
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <PasswordBox x:Name="PasswordTextBox" Width="{StaticResource TextBoxWidth}"
+                                 Style="{StaticResource PasswordBoxStyle}"
+                                 HorizontalAlignment="Left"
+                                 PasswordChanged="OnPasswordChanged"/>
+                    <ToggleButton Grid.Column="1"
+                                  x:Name="PasswordRevealToggle"
+                                  Margin="8,0,0,0"
+                                  VerticalAlignment="Center"
+                                  IsChecked="False"
+                                  Checked="PasswordRevealToggle_Checked"
+                                  Unchecked="PasswordRevealToggle_Unchecked">
+                        <FontIcon Glyph="&#xE052;"/> <!-- Eye icon -->
+                    </ToggleButton>
+                  </Grid>
+                  <TextBlock x:Name="PasswordErrorText" Foreground="Tomato" FontSize="12" Visibility="Collapsed"/>
+                </StackPanel>
+
+                <!-- 票名(第一行) -->
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="票名(第一行)" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                <StackPanel Grid.Row="3" Grid.Column="1" Spacing="4">
+                    <TextBox x:Name="TicketName1TextBox" Width="{StaticResource TextBoxWidth}"
+                             HorizontalAlignment="Left"
+                             HorizontalContentAlignment="Center"
+                             TextAlignment="Center"
+                             TextChanged="OnFormChanged"/>
+                    <TextBlock x:Name="TicketName1ErrorText" Foreground="Tomato" FontSize="12" Visibility="Collapsed"/>
+                </StackPanel>
+
+                <!-- 票名(第二行) -->
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="票名(第二行)" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                <StackPanel Grid.Row="4" Grid.Column="1" Spacing="4">
+                    <TextBox x:Name="TicketName2TextBox" Width="{StaticResource TextBoxWidth}"
+                             HorizontalAlignment="Left"
+                             HorizontalContentAlignment="Center"
+                             TextAlignment="Center"
+                             TextChanged="OnFormChanged"/>
+                    <TextBlock x:Name="TicketName2ErrorText" Foreground="Tomato" FontSize="12" Visibility="Collapsed"/>
+                </StackPanel>
+
+                <!-- 票價 -->
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="票價" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                <StackPanel Grid.Row="5" Grid.Column="1" Spacing="4">
+                    <TextBox x:Name="PriceTextBox" Width="{StaticResource TextBoxWidth}"
+                             HorizontalAlignment="Left"
+                             HorizontalContentAlignment="Center"
+                             TextAlignment="Center"
+                             TextChanged="OnFormChanged"/>
+                    <TextBlock x:Name="PriceErrorText" Foreground="Tomato" FontSize="12" Visibility="Collapsed"/>
+                </StackPanel>
+
+                <!-- 票數 -->
+                <TextBlock Grid.Row="6" Grid.Column="0" Text="票數" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                <StackPanel Grid.Row="6" Grid.Column="1" Spacing="4">
+                    <TextBox x:Name="QuantityTextBox" Width="{StaticResource TextBoxWidth}"
+                             HorizontalAlignment="Left"
+                             HorizontalContentAlignment="Center"
+                             TextAlignment="Center"
+                             TextChanged="OnFormChanged"/>
+                    <TextBlock x:Name="QuantityErrorText" Foreground="Tomato" FontSize="12" Visibility="Collapsed"/>
+                </StackPanel>
+
+                <!-- 搶票 URL -->
+                <TextBlock Grid.Row="7" Grid.Column="0" Text="搶票 URL" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                <StackPanel Grid.Row="7" Grid.Column="1" Spacing="4">
+                    <TextBox x:Name="TargetUrlTextBox" Width="{StaticResource TextBoxWidth}"
+                             HorizontalAlignment="Left"
+                             HorizontalContentAlignment="Center"
+                             TextAlignment="Center"
+                             TextChanged="OnFormChanged"/>
+                    <TextBlock x:Name="UrlErrorText" Foreground="Tomato" FontSize="12" Visibility="Collapsed"/>
+                </StackPanel>
+
+                <!-- 劃位 與 自動付款 與 開賣時間 先不動 -->
+                <StackPanel Grid.Row="8" Grid.Column="0" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                    <TextBlock Text="劃位" VerticalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Grid.Row="8" Grid.Column="1" Orientation="Horizontal" Spacing="24">
+                    <RadioButton x:Name="SeatAutoRadioButton" Content="電腦配位" GroupName="SeatGroup" IsChecked="True"/>
+                    <RadioButton x:Name="SeatManualRadioButton" Content="自行選位" GroupName="SeatGroup"/>
+                </StackPanel>
+                <StackPanel Grid.Row="9" Grid.Column="0" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                    <TextBlock Text="自動付款" VerticalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Grid.Row="9" Grid.Column="1" Orientation="Horizontal" Spacing="24">
+                    <RadioButton x:Name="PaymentAutoRadioButton" Content="是"  GroupName="AutoPayGroup" IsEnabled="False"/>
+                    <RadioButton x:Name="PaymentManualRadioButton" Content="否"  GroupName="AutoPayGroup" IsChecked="True"/>
+                </StackPanel>
+                <StackPanel Grid.Row="10" Grid.Column="0" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                    <TextBlock Text="開賣時間" VerticalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Grid.Row="10" Grid.Column="1" Spacing="4" HorizontalAlignment="Left" Margin="0,0,12,0">
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <!-- 1. 選擇年月日 -->
+                        <Button x:Name="DatePickerButton"
+                                Content="選擇日期"
+                                Width="150">
+                            <Button.Flyout>
+                                <Flyout Placement="Bottom">
+                                    <StackPanel Padding="16"
+                                        Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+                                        Spacing="12">
+                                        <!-- 年月日選擇 -->
+                                        <CalendarView x:Name="DateCalendar"
+                                            SelectionMode="Single"
+                                            MinWidth="350"/>
+                                        <!-- 確定日期 -->
+                                        <Button Content="確定日期"
+                                            Click="ConfirmDate"
+                                            HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
+                        <!-- 2. 選擇 AM/PM + 時分秒 -->
+                        <Button x:Name="TimePickerButton"
+                            Content="選擇時間"
+                            Width="150">
+                            <Button.Flyout>
+                                <Flyout Placement="Bottom">
+                                    <!-- 1. 用 Grid 作為最外層容器 -->
+                                    <Grid MinWidth="350"
+                                        Padding="16"
+                                        Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+                                        <!-- 2. 再把你的 StackPanel 放進來 -->
+                                        <StackPanel Spacing="12">
+                                            <TextBlock Text="選擇時間"
+                                                 FontSize="16"
+                                                 FontWeight="SemiBold"
+                                                 HorizontalAlignment="Center"/>
+                                            <StackPanel Orientation="Horizontal"
+                                                  Spacing="8"
+                                                  HorizontalAlignment="Center">
+                                                <TextBox x:Name="HourBox"   Width="50" PlaceholderText="小時"  MaxLength="2" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                                                <TextBlock Text=":" FontSize="16" VerticalAlignment="Center"/>
+                                                <TextBox x:Name="MinuteBox" Width="50" PlaceholderText="分鐘"  MaxLength="2" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                                                <TextBlock Text=":" FontSize="16" VerticalAlignment="Center"/>
+                                                <TextBox x:Name="SecondBox" Width="50" PlaceholderText="秒數"  MaxLength="2" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                                            </StackPanel>
+                                            <!-- 3 列 Grid 左右兩列分空 正中放開關 -->
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <ToggleSwitch Grid.Column="1" x:Name="AmPmToggle" OnContent="早上" OffContent="下午" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Grid>
+                                            <Button Content="確定時間"
+                                              Click="ConfirmTime"
+                                              HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
+                    </StackPanel>
+                    <TextBlock x:Name="TimeErrorText" Foreground="Tomato" FontSize="12" Visibility="Collapsed"/>
+                </StackPanel>
+
+                <!-- 按鈕列 -->
+                <StackPanel Grid.Row="11" Grid.ColumnSpan="2"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            Spacing="24"
+                            Margin="0,24,0,0">
+                    <Button Content="儲存" Width="120" Click="Save_Click"/>
+                    <Button x:Name="StartButton" Content="開始搶票" Width="120" Click="Start_Click"/>
+                </StackPanel>
+
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</Window>
