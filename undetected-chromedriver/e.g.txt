@@ -1,0 +1,5 @@
+打包補充（建議）
+即使保留目前精簡相容層，打包時仍建議把 setuptools._distutils 一起帶進去，避免目標機器沒有 distutils：
+pyinstaller -F undetected-chromedriver/main.py ^
+  --hidden-import setuptools._distutils ^
+  --hidden-import setuptools._distutils.version

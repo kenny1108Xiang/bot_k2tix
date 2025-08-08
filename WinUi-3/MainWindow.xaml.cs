@@ -176,13 +176,16 @@ namespace kktix
                                         ?? Path.Combine(Directory.GetCurrentDirectory(), "undetected-chromedriver");
 
                 string pyMain = Path.Combine(undetectedDir, "main.py");
-                string pyExe = Path.Combine(undetectedDir, "venv", "Scripts", "python.exe");
+                string pyExeConsole = Path.Combine(undetectedDir, "venv", "Scripts", "python.exe");
+                string pyExeWindowless = Path.Combine(undetectedDir, "venv", "Scripts", "pythonw.exe");
 
                 WriteLauncherLog($"baseDir={baseDir}");
                 WriteLauncherLog($"undetectedDir={undetectedDir}");
-                WriteLauncherLog($"pyExeExists={File.Exists(pyExe)} pyMainExists={File.Exists(pyMain)}");
+                bool hasPyConsole = File.Exists(pyExeConsole);
+                bool hasPyWindowless = File.Exists(pyExeWindowless);
+                WriteLauncherLog($"pyExeConsoleExists={hasPyConsole} pyExeWindowlessExists={hasPyWindowless} pyMainExists={File.Exists(pyMain)}");
 
-                if (!File.Exists(pyMain) || !File.Exists(pyExe))
+                if (!File.Exists(pyMain) || !(hasPyConsole || hasPyWindowless))
                 {
                     if (_isClosed) { Application.Current.Exit(); return; }
                     ContentDialog err = new()
@@ -198,13 +201,17 @@ namespace kktix
                     return;
                 }
 
+                // 優先使用 pythonw.exe（無主控台視窗），否則退回 python.exe 並隱藏視窗
+                string chosenPy = hasPyWindowless ? pyExeWindowless : pyExeConsole;
+
                 var psi = new ProcessStartInfo
                 {
-                    FileName = pyExe,
+                    FileName = chosenPy,
                     Arguments = $"\"{pyMain}\"",
                     WorkingDirectory = undetectedDir,
                     UseShellExecute = false,
-                    CreateNoWindow = false
+                    CreateNoWindow = true,
+                    WindowStyle = ProcessWindowStyle.Hidden
                 };
                 _ = Process.Start(psi);
             }
