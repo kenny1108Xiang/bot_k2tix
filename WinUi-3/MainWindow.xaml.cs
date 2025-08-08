@@ -20,6 +20,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.UI;
@@ -129,11 +130,100 @@ namespace kktix
                 return;
             }
 
-            // 2) 儲存（安靜，不彈出成功提示）
+            // 2) 儲存
             SaveUIToConfig();
             await SaveConfigSilentlyAsync();
 
-            // 3) 後續流程（目前先略）
+            // 3) 啟動 Python 腳本並結束本程式
+            TryLaunchPythonAndExit();
+        }
+
+        private static string? FindDirectoryUpwards(string startPath, string targetFolderName)
+        {
+            try
+            {
+                DirectoryInfo? dir = new DirectoryInfo(startPath);
+                while (dir != null)
+                {
+                    var candidate = Path.Combine(dir.FullName, targetFolderName);
+                    if (Directory.Exists(candidate))
+                    {
+                        return candidate;
+                    }
+                    dir = dir.Parent;
+                }
+            }
+            catch { }
+            return null;
+        }
+
+        private static void WriteLauncherLog(string message)
+        {
+            try
+            {
+                string logPath = Path.Combine(AppContext.BaseDirectory, "launcher.log");
+                File.AppendAllText(logPath, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}\n");
+            }
+            catch { }
+        }
+
+        private void TryLaunchPythonAndExit()
+        {
+            try
+            {
+                string baseDir = AppContext.BaseDirectory;
+                string? undetectedDir = FindDirectoryUpwards(baseDir, "undetected-chromedriver")
+                                        ?? Path.Combine(Directory.GetCurrentDirectory(), "undetected-chromedriver");
+
+                string pyMain = Path.Combine(undetectedDir, "main.py");
+                string pyExe = Path.Combine(undetectedDir, "venv", "Scripts", "python.exe");
+
+                WriteLauncherLog($"baseDir={baseDir}");
+                WriteLauncherLog($"undetectedDir={undetectedDir}");
+                WriteLauncherLog($"pyExeExists={File.Exists(pyExe)} pyMainExists={File.Exists(pyMain)}");
+
+                if (!File.Exists(pyMain) || !File.Exists(pyExe))
+                {
+                    if (_isClosed) { Application.Current.Exit(); return; }
+                    ContentDialog err = new()
+                    {
+                        Title = "啟動失敗",
+                        Content = "找不到 Python 或 main.py。\n請確認已建立 venv 並安裝需求套件：\n" +
+                                  "python -m venv undetected-chromedriver/venv\n" +
+                                  "undetected-chromedriver/venv/Scripts/python.exe -m pip install -r undetected-chromedriver/requirements.txt",
+                        CloseButtonText = "確定",
+                        XamlRoot = (this.Content as FrameworkElement)?.XamlRoot
+                    };
+                    _ = err.ShowAsync();
+                    return;
+                }
+
+                var psi = new ProcessStartInfo
+                {
+                    FileName = pyExe,
+                    Arguments = $"\"{pyMain}\"",
+                    WorkingDirectory = undetectedDir,
+                    UseShellExecute = false,
+                    CreateNoWindow = false
+                };
+                _ = Process.Start(psi);
+            }
+            catch (Exception ex)
+            {
+                WriteLauncherLog($"launch-exception: {ex}");
+                if (_isClosed) { Application.Current.Exit(); return; }
+                ContentDialog err = new()
+                {
+                    Title = "啟動失敗",
+                    Content = $"無法啟動 Python：{ex.Message}",
+                    CloseButtonText = "確定",
+                    XamlRoot = (this.Content as FrameworkElement)?.XamlRoot
+                };
+                _ = err.ShowAsync();
+                return;
+            }
+
+            Application.Current.Exit();
         }
 
         // �]�w�ɶ��\��
