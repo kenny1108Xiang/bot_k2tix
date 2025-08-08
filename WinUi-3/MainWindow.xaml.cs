@@ -55,7 +55,7 @@ namespace kktix
         }
         private async void RootGrid_Loaded(object sender, RoutedEventArgs e)
         {
-            // �Ѱ����U�A�קK����Ĳ�o
+            // 避免重複觸發，解除 Loaded 事件
             RootGrid.Loaded -= RootGrid_Loaded;
 
             if (App.IsConfigInitializeFailed && !string.IsNullOrEmpty(App.ConfigErrorMessage))
@@ -226,7 +226,7 @@ namespace kktix
             Application.Current.Exit();
         }
 
-        // �]�w�ɶ��\��
+        // 設定時間選擇狀態
         private DateTimeOffset selectedDateTime = DateTimeOffset.Now;
         private void ConfirmDate(object sender, RoutedEventArgs e)
         {
@@ -246,12 +246,12 @@ namespace kktix
 
         private void ConfirmTime(object sender, RoutedEventArgs e)
         {
-            // �q Text �ѪR
+            // 從輸入框讀取數值
             if (!int.TryParse(HourBox.Text, out int h)) return;
             if (!int.TryParse(MinuteBox.Text, out int m)) return;
             if (!int.TryParse(SecondBox.Text, out int s)) return;
 
-            // AM/PM �ഫ
+            // AM/PM 轉換
             if (AmPmToggle.IsOn)      // AM
             {
                 if (h == 12) h = 0;
@@ -261,7 +261,7 @@ namespace kktix
                 if (h != 12) h += 12;
             }
 
-            // ��s�ɤ����A�O�d�~����Offset
+            // 更新時間（保留原本的時區 Offset）
             selectedDateTime = new DateTimeOffset(
                 selectedDateTime.Year,
                 selectedDateTime.Month,
@@ -269,7 +269,7 @@ namespace kktix
                 h, m, s,
                 selectedDateTime.Offset);
 
-            // ��s���s��ܩM�x�s
+            // 更新顯示並寫回設定
             var culture = new CultureInfo("zh-TW");
             TimePickerButton.Content = selectedDateTime.ToString("tt hh:mm:ss", culture);
             UserConfig.Instance.SaleTime = selectedDateTime;
