@@ -136,7 +136,7 @@ namespace kktix
             await SaveConfigSilentlyAsync();
 
             // 3) 啟動 Python 腳本並結束本程式
-            TryLaunchPythonAndExit();
+            await TryLaunchPythonAndExitAsync();
         }
 
         private static string? FindDirectoryUpwards(string startPath, string targetFolderName)
@@ -168,13 +168,126 @@ namespace kktix
             catch { }
         }
 
-        private void TryLaunchPythonAndExit()
+        private static bool RunCommandAndLog(string fileName, string arguments, int timeoutMs = 15000)
+        {
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = fileName,
+                    Arguments = arguments,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                };
+
+                using var process = Process.Start(psi);
+                if (process == null)
+                {
+                    WriteLauncherLog($"failed to start: {fileName} {arguments}");
+                    return false;
+                }
+
+                bool exited = process.WaitForExit(timeoutMs);
+                if (!exited)
+                {
+                    try { process.Kill(true); } catch { }
+                    WriteLauncherLog($"timeout: {fileName} {arguments}");
+                    return false;
+                }
+
+                WriteLauncherLog($"cmd done: {fileName} {arguments}, exitCode={process.ExitCode}");
+                return process.ExitCode == 0;
+            }
+            catch (Exception ex)
+            {
+                WriteLauncherLog($"cmd exception: {fileName} {arguments}, ex={ex}");
+                return false;
+            }
+        }
+
+        private static void TrySyncSystemTimeTaipei()
+        {
+            try
+            {
+                // 設定系統時區為台北標準時間 (UTC+08:00)
+                RunCommandAndLog("tzutil", "/s \"Taipei Standard Time\"");
+
+                // 啟動 Windows Time 服務（若已啟動會失敗但可忽略）
+                RunCommandAndLog("sc", "start w32time", timeoutMs: 8000);
+
+                // 觸發時間同步（可能需要系統管理員權限）
+                bool ok = RunCommandAndLog("w32tm", "/resync /force", timeoutMs: 15000);
+                if (!ok)
+                {
+                    // 再嘗試一次不加 /force
+                    RunCommandAndLog("w32tm", "/resync", timeoutMs: 15000);
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLauncherLog($"time-sync exception: {ex}");
+            }
+        }
+
+        private static long GetDirectorySizeBytes(string directoryPath)
+        {
+            try
+            {
+                long totalBytes = 0;
+                foreach (var filePath in Directory.EnumerateFiles(directoryPath, "*", SearchOption.AllDirectories))
+                {
+                    try
+                    {
+                        var fi = new FileInfo(filePath);
+                        totalBytes += fi.Length;
+                    }
+                    catch { }
+                }
+                return totalBytes;
+            }
+            catch
+            {
+                return 0L;
+            }
+        }
+
+        private async Task TryLaunchPythonAndExitAsync()
         {
             try
             {
                 string baseDir = AppContext.BaseDirectory;
                 string? undetectedDir = FindDirectoryUpwards(baseDir, "undetected-chromedriver")
                                         ?? Path.Combine(Directory.GetCurrentDirectory(), "undetected-chromedriver");
+
+                // 在啟動 Python 前先檢查並清理 undetected-chromedriver/user 目錄
+                try
+                {
+                    string userDir = Path.Combine(undetectedDir, "user");
+                    if (Directory.Exists(userDir))
+                    {
+                        long sizeBytes = GetDirectorySizeBytes(userDir);
+                        WriteLauncherLog($"userDir exists, sizeBytes={sizeBytes}");
+                        const long limitBytes = 100L * 1024L * 1024L; // 100MB
+                        if (sizeBytes > limitBytes)
+                        {
+                            try
+                            {
+                                WriteLauncherLog("userDir exceeds 100MB, deleting...");
+                                Directory.Delete(userDir, true);
+                                WriteLauncherLog("userDir deleted");
+                            }
+                            catch (Exception delEx)
+                            {
+                                WriteLauncherLog($"failed to delete userDir: {delEx}");
+                            }
+                        }
+                    }
+                }
+                catch { }
+
+                // 在啟動 Python 前，嘗試進行一次系統時間校時（台北 UTC+08:00）
+                TrySyncSystemTimeTaipei();
 
                 string pyMain = Path.Combine(undetectedDir, "main.py");
                 string pyExeConsole = Path.Combine(undetectedDir, "venv", "Scripts", "python.exe");
@@ -210,11 +323,15 @@ namespace kktix
                     FileName = chosenPy,
                     Arguments = $"\"{pyMain}\"",
                     WorkingDirectory = undetectedDir,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
+                    UseShellExecute = true, // 改為 true，讓 Python 進程獨立運行
                     WindowStyle = ProcessWindowStyle.Hidden
                 };
-                _ = Process.Start(psi);
+                var process = Process.Start(psi);
+                WriteLauncherLog($"Python process started with PID: {process?.Id}");
+                
+                // 給 Python 進程足夠的啟動時間，然後再退出 GUI
+                await Task.Delay(3000); // 等待 3 秒讓 Python 完全啟動
+                WriteLauncherLog("Delayed exit to ensure Python process independence");
             }
             catch (Exception ex)
             {
