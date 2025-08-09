@@ -21,9 +21,22 @@ BundleArtifacts/
 *.opendb
 *.dbmdl
 *.cache
+TODO
+
 
 
 # Python
 user/
 venv/
+build/
+dist/
+temp/
+*.spec
 __pycache__
+undetected-chromedriver/undetected-chromedriver
+
+# html
+dom.html
+
+# bat
+run_bot.bat
